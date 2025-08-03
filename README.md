@@ -1,19 +1,23 @@
-# Job Board API
+# Bookmark Management API
 
-A fully-featured **RESTful API** for a job board platform built using **Node.js**, **TypeScript**, **Sequelize**, and **PostgreSQL**. Includes full **authentication**, **recruiter profiles**, **job postings**, **applications**, **role-based access control**, **avatar upload**, **pagination**, and more.
+A fully featured RESTful API to manage personal bookmarks with categories, tags, and metadata. Built with **Node.js**, **Express**, **Sequelize**, and **TypeScript**, and designed with scalable architecture (repository, service, controller). Suitable for use cases like saving web resources, tagging articles, or managing personal reading lists.
 
 ## Tech Stack
 
-- **Backend:** Node.js, Express.js
-- **Language:** TypeScript
-- **ORM:** Sequelize (with Sequelize CLI + Migrations)
-- **Database:** PostgreSQL
-- **Authentication:** JWT (access & refresh tokens)
-- **File Uploads:** Multer
-- **Testing:** Jest
-- **Validation:** Zod
-- **Documentation:** Swagger (OpenAPI YAML)
-- **Architecture:** Modular & Component-based (repository → service → controller)
+- User authentication (JWT + Refresh tokens)
+- Role-based access (`user`, `admin`)
+- CRUD for Bookmarks
+- CRUD for Folders
+- Bookmark tagging (many-to-many)
+- Search, filter, and pagination
+- Avatar upload via Multer
+- Email verification (optional)
+- Global error handling
+- Background worker for async tasks (optional enhancement)
+- CI/CD via GitHub Actions
+- SQLite for testing | PostgreSQL for production
+- Fully tested with Jest
+- Swagger API documentation
 
 ## Project Structure
 
@@ -22,10 +26,10 @@ src/
 ├── components/
 │   ├── auth/
 │   ├── users/
-│   ├── recruiters/
-│   ├── models/
-│   ├── job-posts/
-│   └── job-applications/
+│   ├── bookmarks/
+│   ├── folders/
+│   ├── tags/
+│   └── models/
 ├── config/
 ├── middleware/
 ├── models/
@@ -36,43 +40,56 @@ src/
 └── index.ts
 ```
 
-## Features
+## API Endpoints
 
-### Authentication
+**Base URL**: http://localhost:8080/api/v1
+**Live Base URL**: https://bookmark-manager-api.onrender.com/api/v1
 
-- Register, Login, Refresh token
-- Roles: `user`, `recruiter`, `admin`
-- Password hashing, token-based auth
+**Auth**
 
-### User Features
+- POST /auth/register
+- POST /auth/register?role=admin
+- POST /auth/login
+- POST /auth/refresh
 
-- View and update own profile
-- Change password and avatar
-- Admin: view/delete all users
+**Users**
 
-### Recruiter Features
+- GET /users
+- GET /users/profile
+- PATCH /users/profile
+- PATCH /users/profile/avatar
+- PATCH /users/profile/password
+- DELETE /users/:id (admin)
 
-- Create/update own profile
-- Post, update, and delete job listings
-- View applications for their jobs
+**Bookmarks**
 
-### Job Posting
+- GET /bookmarks
+- POST /bookmarks
+- GET /bookmarks/:id
+- PATCH /bookmarks/:id
+- DELETE /bookmarks/:id
+- POST /bookmarks/:id/tags
+- GET /bookmarks/:id/tags
 
-- Public endpoint to list jobs (with filters & pagination)
-- Admin: list and delete any job
-- Recruiter: CRUD operations on own jobs
+**Folders**
 
-### Applications
+- GET /folders
+- POST /folders
+- GET /folders/:id
+- PATCH /folders/:id
+- DELETE /folders/:id
 
-- Users can apply to jobs with cover letter + resume link
-- Users can view and withdraw applications
-- Recruiters can shortlist or reject applications
-- Admin can view all applications
+**Tags**
+
+- GET /tags
+- POST /tags
+- GET /tags/:id
+- PATCH /tags/:id
+- DELETE /tags/:id
 
 ## API Documentation
 
 - **Swagger UI**: [View Live Docs](https://bookmark-manager-api.onrender.com/docs)
-- **Base URL**: `https://bookmark-manager-api.onrender.com/api/v1`
 
 ## Getting Started
 
