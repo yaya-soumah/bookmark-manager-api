@@ -1,0 +1,791 @@
+openapi: 3.0.0
+info:
+  title: Bookmark Manager API
+  version: 1.0.0
+  description: API for a full-featured Bookmark management system built with Node.js, TypeScript, and Sequelize
+
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Development server
+  - url: https://bookmark-manager.onrender.com/api/v1
+    description: Production server
+
+tags:
+  - name: Auth
+    description: User authentication and token management
+  - name: Users
+    description: Public and authenticated user profile operations
+  - name: Tags
+    description: Create, fetch, update, delete tags
+  - name: Folders
+    description: Create, update, delete, fetch folders
+  - name: Bookmarks
+    description: Create, update, read, delete bookmarks, tag bookmark and add bookmark to folder
+paths:
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Register a new user with role as user
+      parameters:
+        - in: query
+          name: role
+          description: Register a new user with admin role
+          required: false
+          type: string
+          enum: [admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password, username]
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+                username:
+                  type: string
+      responses:
+        '201':
+          description: User registered
+        '400':
+          description: Validation error
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Login with credentials
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '200':
+          description: login successful
+        '400':
+          description: Invalid credentials
+
+  /auth/refresh:
+    post:
+      tags: [Auth]
+      summary: Refresh access token
+      responses:
+        '200':
+          description: Token refreshed successfully
+        '400':
+          description: Invalid refresh token
+
+  security:
+    - bearerAuth: []
+
+  /users:
+    get:
+      tags: [Users]
+      summary: Get list of users (only admin)
+      parameters:
+        - in: query
+          name: page
+          required: false
+          schema:
+            type: integer
+          default: 1
+        - in: query
+          name: limit
+          required: false
+          schema:
+            type: integer
+          default: 10
+        - in: query
+          name: q
+          description: Filter by username
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: operation successful
+        '401':
+          description: Access denied. No token provided
+        '403':
+          description: Invalid or expired token
+
+  /users/profile:
+    get:
+      tags: [Users]
+      summary: Get user profile
+      responses:
+        '204':
+          description: User retrieved
+        '401':
+          description: Access denied. No token provided
+        '403':
+          description: Invalid or expired token
+    patch:
+      tags: [Users]
+      summary: Update user profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [bio]
+              properties:
+                bio: type:string
+
+      responses:
+        '200':
+          description: Profile updated
+        '400':
+          description: Validation error
+        '401':
+          description: Access denied. No token provided
+        '403':
+          description: Invalid or expired token
+
+  /users/{id}:
+    delete:
+      tags: [Users]
+      summary: Remove a user by id (Admin only)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: User deleted
+        '401':
+          description: Access denied. No token provided
+        '403':
+          description: Invalid or expired token
+        '404':
+          description: User not found
+
+  /users/profile/password:
+    patch:
+      tags: [Users]
+      summary: Update user password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [newPassword, currentPassword]
+              properties:
+                newPassword:
+                  type: string
+                currentPassword:
+                  type: string
+      responses:
+        '200':
+          description: Password updated
+        '400':
+          description: Validation error
+        '401':
+          description: Access denied. No token provided
+        '403':
+          description: Invalid or expired token
+
+  /users/profile/avatar:
+    patch:
+      tags: [Users]
+      summary: Upload or update avatar
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: Avatar uploaded
+        '400':
+          description: Validation error
+        '401':
+          description: Access denied. No token provided
+        '403':
+          description: Invalid or expired token
+
+  /tags:
+    post:
+      tags: [Tags]
+      summary: Create new tag
+      requestBody:
+        required: true
+        content:
+        application/json:
+          schema:
+            type: object
+            required: [name]
+            properties:
+              name:
+                type: string
+      responses:
+        '200':
+          description: Tag created
+        '400':
+          description: Validation error
+        '401':
+          description: Access denied. No token provided
+        '403':
+          description: Invalid or expired token
+    get:
+      tags: [Tags]
+      summary: get list of tags
+      parameters:
+        - in: query
+          name: page
+          required: false
+          schema:
+            type: integer
+          default: 1
+        - in: query
+          name: limit
+          required: false
+          schema:
+            type: integer
+          default: 10
+        - in: query
+          name: q
+          description: Filter by tag name
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Operation successful
+        '401':
+          description: Access denied. No token provided
+        '403':
+          description: Invalid or expired token
+
+  /tags/{id}:
+    get:
+      tags: [Tags]
+      summary: Get tag by id
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Tag retrieved
+        '401':
+          description: Access denied. No token provided
+        '403':
+          description: Invalid or expired token
+        '404':
+          description: Tag not found
+    delete:
+      tags: [Tags]
+      summary: Remove a tag by id
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Tag deleted
+        '401':
+          description: Access denied. No token provided
+        '403':
+          description: Invalid or expired token
+        '404':
+          description: Tag not found
+    patch:
+      tags: [Tags]
+      summary: Update a tag by id
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        require: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name:
+                  type: string
+      responses:
+        '200':
+          description: Tag updated
+        '400':
+          description: Validation error
+        '401':
+          description: Access denied. No token provided
+        '403':
+          description: Invalid or expired token
+        '404':
+          description: Tag not found
+
+  /folders:
+    post:
+      tags: [Folders]
+      summary: Create new folder
+      requestBody:
+        required: true
+        content:
+        application/json:
+          schema:
+            type: object
+            required: [name]
+            properties:
+              name:
+                type: string
+      responses:
+        '200':
+          description: Folder created
+        '400':
+          description: Validation error
+        '401':
+          description: Access denied. No token provided
+        '403':
+          description: Invalid or expired token
+
+    get:
+      tags: [Folders]
+      summary: get list of folders
+      parameters:
+        - in: query
+          name: page
+          required: false
+          schema:
+            type: integer
+          default: 1
+        - in: query
+          name: limit
+          required: false
+          schema:
+            type: integer
+          default: 10
+        - in: query
+          name: q
+          description: Filter by folder name
+          required: false
+          schema:
+            type: string
+        - in: query
+          name: userId
+          description: Filter by userId
+          required: false
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Operation successful
+        '400':
+          description: Validation error
+        '401':
+          description: Access denied. No token provided
+        '403':
+          description: Invalid or expired token
+
+  /folders/{id}:
+    get:
+      tags: [Folders]
+      summary: Get folder by id
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Folder retrieved
+        '401':
+          description: Access denied. No token provided
+        '403':
+          description: Invalid or expired token
+        '404':
+          description: Folder not found
+    delete:
+      tags: [Folders]
+      summary: Remove a folder by id
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Folder deleted
+        '401':
+          description: Access denied. No token provided
+        '403':
+          description: Invalid or expired token
+        '404':
+          description: Folder not found
+    patch:
+      tags: [Folders]
+      summary: Update a folder by id
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        require: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name:
+                  type: string
+      responses:
+        '200':
+          description: Folder updated
+        '400':
+          description: Validation error
+        '401':
+          description: Access denied. No token provided
+        '403':
+          description: Invalid or expired token
+        '404':
+          description: Folder not found
+
+  /bookmarks:
+    post:
+      tags: [Bookmarks]
+      summary: Create new bookmark
+      requestBody:
+        required: true
+        content:
+        application/json:
+          schema:
+            type: object
+            required: [title, url, folderId]
+            properties:
+              name:
+                type: string
+              url:
+                type: string
+              folderId:
+                type: integer
+      responses:
+        '200':
+          description: Bookmark created
+        '400':
+          description: Validation error
+        '401':
+          description: Access denied. No token provided
+        '403':
+          description: Invalid or expired token
+    get:
+      tags: [Bookmarks]
+      summary: Get list of bookmarks
+      parameters:
+        - in: query
+          name: page
+          required: false
+          schema:
+            type: integer
+          default: 1
+        - in: query
+          name: limit
+          required: false
+          schema:
+            type: integer
+          default: 10
+        - in: query
+          name: q
+          description: Filter by title and url
+          required: false
+          schema:
+            type: string
+        - in: query
+          name: tagIds
+          description: Filter by tags
+          required: false
+          type: array
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: operation successful
+        '401':
+          description: Access denied. No token provided
+        '403':
+          description: Invalid or expired token
+  /bookmark/{id}:
+    get:
+      tags: [Bookmarks]
+      summary: Get bookmark by id
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Bookmark retrieved
+        '401':
+          description: Access denied. No token provided
+        '403':
+          description: Invalid or expired token
+        '404':
+          description: Bookmark not found
+    delete:
+      tags: [Bookmarks]
+      summary: Remove a bookmark by id
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Bookmark deleted
+        '401':
+          description: Access denied. No token provided
+        '403':
+          description: Invalid or expired token
+        '404':
+          description: Bookmark not found
+    patch:
+      tags: [Bookmarks]
+      summary: Update a bookmark by id
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        require: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                  required: false
+                url:
+                  type: string
+                  required: false
+                isFavorite:
+                  type: boolean
+                  required: false
+                  default: false
+                isPublic:
+                  type: boolean
+                  required: false
+                  default: false
+      responses:
+        '200':
+          description: Bookmark updated
+        '400':
+          description: Validation error
+        '401':
+          description: Access denied. No token provided
+        '403':
+          description: Invalid or expired token
+        '404':
+          description: Bookmark not found
+
+  /bookmarks/{id}/tags:
+    post:
+      tags: [Bookmarks]
+      summary: Add tags to a bookmark
+      parameters:
+        - in: path
+          name: id
+          required: false
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+        application/json:
+          schema:
+            type: array
+            required: [tagIds]
+            properties:
+              tagIds:
+                type: integer
+      responses:
+        '200':
+          description: Tags added
+        '400':
+          description: Validation error
+        '401':
+          description: Access denied. No token provided
+        '403':
+          description: Invalid or expired token
+        '404':
+          description: Bookmark not found
+
+    get:
+      tags: [Bookmarks]
+      summary: Get list of tags  of a bookmark
+      parameters:
+        - in: path
+          name: id
+          required: false
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: operation successful
+        '401':
+          description: Access denied. No token provided
+        '403':
+          description: Invalid or expired token
+        '404':
+          description: Bookmark not found
+    delete:
+      tags: [Bookmarks]
+      summary: Remove tags from a bookmark
+      parameters:
+        - in: path
+          name: id
+          required: false
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+        application/json:
+          schema:
+            type: array
+            required: [tagIds]
+            properties:
+              tagIds:
+                type: integer
+      responses:
+        '200':
+          description: Tags removed
+        '400':
+          description: Validation error
+        '401':
+          description: Access denied. No token provided
+        '403':
+          description: Invalid or expired token
+        '404':
+          description: Bookmark not found
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        email:
+          type: string
+          format: email
+        username:
+          type: string
+        bio:
+          type: string
+          nullable: true
+        avatar:
+          type: string
+          nullable: true
+        role:
+          type: string
+          enum: [user, admin]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    Tag:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        userId:
+          type: integer
+          nullable: false
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    Folder:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        userId:
+          type: integer
+          nullable: false
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    Bookmark:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        url:
+          type: integer
+        isFavorite:
+          type: boolean
+          default: false
+        isPublic:
+          type: boolean
+          default: false
+        userId:
+          type: integer
+        folderId:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        deletedAt:
+          type: string
+          format: date-time
