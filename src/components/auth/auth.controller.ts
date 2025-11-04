@@ -1,13 +1,13 @@
-import { Request, Response } from 'express'
+import { Request, Response, NextFunction } from 'express'
 
-import { error, success } from '../../utils/response.util'
-import { AppError } from '../../utils/app-error.util'
+import { success } from '../../utils/response.util'
 
 import { AuthService } from './auth.service'
+import { QuerySchema, CookieSchema } from './auth.schema'
 
-export async function register(req: Request, res: Response) {
+export async function register(req: Request, res: Response, next: NextFunction) {
   try {
-    const role = (req.query.role as string) || 'user'
+    const { role } = QuerySchema.parse(req.query)
     const data = req.body
     const { user, accessToken, refreshToken } = await AuthService.registerUser({ ...data, role })
     res.cookie('refreshToken', refreshToken, {
@@ -19,11 +19,11 @@ export async function register(req: Request, res: Response) {
 
     success(res, 201, { token: accessToken, user }, 'User created successfully')
   } catch (err) {
-    error(res, (err as AppError).statusCode, (err as AppError).message)
+    next(err)
   }
 }
 
-export async function login(req: Request, res: Response) {
+export async function login(req: Request, res: Response, next: NextFunction) {
   try {
     const data = req.body
     const { user, accessToken, refreshToken } = await AuthService.loginUser(
@@ -40,18 +40,18 @@ export async function login(req: Request, res: Response) {
 
     success(res, 200, { token: accessToken, user }, 'login successful')
   } catch (err) {
-    error(res, (err as AppError).statusCode, (err as AppError).message)
+    next(err)
   }
 }
 
-export async function refreshToken(req: Request, res: Response) {
+export async function refreshToken(req: Request, res: Response, next: NextFunction) {
   try {
-    const token = req.cookies.refreshToken
-    if (!token) throw new AppError('Refresh token is required', 401)
+    const { refreshToken: token } = CookieSchema.parse(req.cookies)
+
     const { newToken } = await AuthService.refresh(token)
 
     success(res, 200, { token: newToken }, 'Token refreshed successfully')
   } catch (err) {
-    error(res, (err as AppError).statusCode, (err as AppError).message)
+    next(err)
   }
 }

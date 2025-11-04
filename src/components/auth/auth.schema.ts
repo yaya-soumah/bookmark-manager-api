@@ -12,5 +12,13 @@ export const LoginSchema = z.object({
   email: z.string().email(),
 })
 
+export const QuerySchema = z.object({
+  role: z.string().default('user'),
+})
+
+export const CookieSchema = z.object({
+  refreshToken: z.string({ required_error: 'Refresh token is required' }),
+})
+
 export type AuthType = z.infer<typeof AuthSchema>
 export type LoginType = z.infer<typeof LoginSchema>
